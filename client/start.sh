@@ -13,28 +13,38 @@ sudo docker ps -a
 
 
 
-echo 'Installing chaincode..'
-sudo docker exec -e "CORE_PEER_LOCALMSPID=Org1MSP" -e "CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp" cli peer chaincode install -n mycc -v 1.0 -p "/opt/gopath/src/github.com/newcc" -l "node"
+echo 'Installing Student contract..'
+sudo docker exec -it cli peer chaincode install -n mycc -v 1.0 -p "/opt/gopath/src/github.com/chaincode" -l "node"
 
-echo 'Instantiating chaincode..'
-sudo docker exec -e "CORE_PEER_LOCALMSPID=Org1MSP" -e "CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp" cli peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n mycc -l "node" -v 1.0 -c '{"Args":[]}'
+echo 'Instantiating Student contract..'
+sudo docker exec -it cli peer chaincode instantiate -o orderer.example.com:7050 -C mychannel -n mycc -l "node" -v 1.0 -c '{"Args":[]}'
 
-echo 'Getting things ready for Chaincode Invocation..should take only 10 seconds..'
+echo 'Getting things ready for chaincode operations..should take only 10 seconds..'
 
 sleep 10
 
-echo 'Adding Student Marks'
+echo 'Adding Student'
 
-sudo docker exec -e “CORE_PEER_LOCALMSPID=Org1MSP” -e “CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp” cli peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"function":"addMarks","Args":["Alice","68","84","89"]}'
+sudo docker exec -it cli peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"function":"addStudent","Args":["SID12345","Alice","12","Male","7"]}'
 
-sleep 3
-echo 'Querying;.. Alice Marks'
+sleep 2
+echo 'Querying student'
 
-sudo docker exec -e “CORE_PEER_LOCALMSPID=Org1MSP” -e “CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp” cli peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"function":"queryMarks","Args":["Alice"]}'
+sudo docker exec -it cli peer chaincode query -C mychannel -n mycc -c '{"function":"queryStudent","Args":["SID12345"]}'
 
- echo 'deleting Alice marks'
+echo 'Updating Student'
 
-sudo docker exec -e “CORE_PEER_LOCALMSPID=Org1MSP” -e “CORE_PEER_MSPCONFIGPATH=/opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp” cli peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"function":"deleteMarks","Args":["Alice"]}'
+sudo docker exec -it cli peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"function":"updateStudent","Args":["SID12345","Alice joe","13","Male","8"]}'
+
+sleep 2
+echo 'Querying updated student'
+
+sudo docker exec -it cli peer chaincode query -C mychannel -n mycc -c '{"function":"queryStudent","Args":["SID12345"]}'
+
+
+ echo 'deleting student'
+
+sudo docker exec -it cli peer chaincode invoke -o orderer.example.com:7050 -C mychannel -n mycc -c '{"function":"deleteStudent","Args":["SID12345"]}'
 
 sleep 5
 # Starting docker logs of chaincode container
